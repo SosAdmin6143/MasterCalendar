@@ -23,6 +23,7 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
   const [editingGroupId, setEditingGroupId] = useState<string | null>(initialCreateMode ? 'NEW' : null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [teamsWebhookUrl, setTeamsWebhookUrl] = useState('');
   const [color, setColor] = useState(PRESET_COLORS[0].hex);
   const [outlookCategory, setOutlookCategory] = useState(PRESET_COLORS[0].outlookCategory);
 
@@ -30,6 +31,7 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
     setEditingGroupId('NEW');
     setName('');
     setDescription('');
+    setTeamsWebhookUrl('');
     setColor(PRESET_COLORS[0].hex);
     setOutlookCategory(PRESET_COLORS[0].outlookCategory);
   };
@@ -38,6 +40,7 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
     setEditingGroupId(g.id);
     setName(g.name);
     setDescription(g.description || '');
+    setTeamsWebhookUrl(g.teamsWebhookUrl || '');
     setColor(g.color);
     setOutlookCategory(g.outlookCategory || 'Blue Category');
   };
@@ -50,6 +53,7 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
       ...(editingGroupId !== 'NEW' ? { id: editingGroupId! } : {}),
       name: name.trim(),
       description: description.trim() || undefined,
+      teamsWebhookUrl: teamsWebhookUrl.trim() || undefined,
       color,
       outlookCategory,
     });
@@ -176,6 +180,22 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-1">
+                  MS Teams Incoming Webhook URL
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://your-domain.webhook.office.com/..."
+                  value={teamsWebhookUrl}
+                  onChange={(e) => setTeamsWebhookUrl(e.target.value)}
+                  className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg px-3.5 py-2 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium font-mono"
+                />
+                <p className="mt-1 text-[10px] text-gray-500 dark:text-slate-400">
+                  Optional. Add an Incoming Webhook URL to automatically post new events to a Microsoft Teams channel.
+                </p>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

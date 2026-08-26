@@ -7,6 +7,7 @@ import pg from 'pg';
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 import { SharedCalendar, CalendarEvent, EventGroup } from './src/types/calendar';
 import { generateICSFeed } from './src/utils/icsGenerator';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -405,6 +406,86 @@ async function startServer() {
   app.get('/api/calendar/:calId/feed.ics', (req, res) => serveICal(req, res, req.params.calId));
   app.get('/api/calendar/:calId.ics', (req, res) => serveICal(req, res, req.params.calId));
   app.get('/api/calendar/:calId/group/:groupId/feed.ics', (req, res) => serveICal(req, res, req.params.calId, req.params.groupId));
+
+  // --- NOTIFICATIONS API ---
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_PORT === '465',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    }
+  });
+
+  app.post('/api/notifications/notify', async (req, res) => {
+    try {
+      const { event, group, calendarName, notifyEmail, notifyTeams, type } = req.body;
+      const host = req.headers.host || 'localhost:3000';
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const appUrl = `${protocol}://${host}/?subcalendar=${group?.id || ''}`;
+      
+      const actionText = type === 'create' ? 'created' : 'updated';
+      const eventDate = new Date(event.start).toLocaleString();
+
+      // MS Teams Webhook
+      if (notifyTeams && group?.teamsWebhookUrl) {
+        const teamsPayload = {
+          "@type": "MessageCard",
+          "@context": "http://schema.org/extensions",
+          "themeColor": (group.color || "#3B82F6").replace('#', ''),
+          "summary": `Event ${actionText}: ${event.title}`,
+          "sections": [{
+            "activityTitle": `📅 Event ${actionText}: **${event.title}**`,
+            "activitySubtitle": `Group: ${group.name}`,
+            "facts": [
+              { "name": "When:", "value": eventDate },
+              { "name": "Location:", "value": event.location || 'TBD' },
+              { "name": "Description:", "value": event.description || 'No description provided.' }
+            ],
+            "markdown": true
+          }],
+          "potentialAction": [{
+            "@type": "OpenUri",
+            "name": "View Calendar",
+            "targets": [{ "os": "default", "uri": appUrl }]
+          }]
+        };
+        await fetch(group.teamsWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(teamsPayload)
+        }).catch(err => console.error("Teams webhook failed:", err));
+      }
+
+      // Email Notification
+      if (notifyEmail && event.attendees && event.attendees.length > 0 && process.env.SMTP_USER) {
+        const mailOptions = {
+          from: process.env.SMTP_FROM || process.env.SMTP_USER,
+          to: event.attendees.join(','),
+          subject: `Event ${actionText}: ${event.title} (${calendarName})`,
+          html: `
+            <div style="font-family: sans-serif; color: #333;">
+              <h2 style="color: ${group?.color || '#3B82F6'}">Event ${actionText}: ${event.title}</h2>
+              <p><strong>When:</strong> ${eventDate}</p>
+              <p><strong>Location:</strong> ${event.location || 'TBD'}</p>
+              <p><strong>Group:</strong> ${group?.name}</p>
+              <hr/>
+              <p>${event.description || ''}</p>
+              <br/>
+              <a href="${appUrl}" style="display:inline-block; padding: 10px 15px; background: #3B82F6; color: white; text-decoration: none; border-radius: 5px;">View Calendar</a>
+            </div>
+          `
+        };
+        await transporter.sendMail(mailOptions).catch(err => console.error("Email send failed:", err));
+      }
+
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error("Notification API Error:", err);
+      res.status(500).json({ error: 'Failed to send notifications' });
+    }
+  });
 
   // --- AI EVENT CREATION / PARSER VIA GEMINI ---
   app.post('/api/ai/parse-events', async (req, res) => {

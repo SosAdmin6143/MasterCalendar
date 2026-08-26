@@ -6,6 +6,7 @@ export interface EventGroup {
   textColor?: string; // Optional custom text color
   outlookCategory?: string; // Standard Outlook category name hint
   icon?: string; // Lucide icon name hint
+  teamsWebhookUrl?: string; // MS Teams Incoming Webhook URL
 }
 
 export interface CalendarEvent {
