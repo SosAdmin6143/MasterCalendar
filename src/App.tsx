@@ -166,6 +166,9 @@ export default function App() {
     const origin = getPublicOrigin() || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareUrl = `${origin}/?subcalendar=${groupId}`;
 
+    // Open link in new tab synchronously to avoid popup blockers
+    window.open(shareUrl, '_blank');
+
     const fallbackCopy = (content: string) => {
       const textArea = document.createElement('textarea');
       textArea.value = content;
@@ -541,7 +544,7 @@ export default function App() {
           visibleGroupIds={visibleGroupIds}
           onToggleGroup={handleToggleGroup}
           onToggleAll={handleToggleAllGroups}
-          onFocusSubCalendar={handleFocusSubCalendar}
+          onCopyAndOpenWebLink={handleCopySubCalendarWebLink}
           onOpenShareGroup={(groupId) => {
             setShareInitialGroupId(groupId);
             setShowShareModal(true);

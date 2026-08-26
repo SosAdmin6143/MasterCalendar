@@ -48,6 +48,18 @@ export function escapeICalText(text: string = ''): string {
     .replace(/\r/g, '');
 }
 
+function foldLine(line: string): string {
+  if (line.length <= 75) return line;
+  const result: string[] = [];
+  result.push(line.substring(0, 75));
+  let index = 75;
+  while (index < line.length) {
+    result.push(' ' + line.substring(index, index + 74));
+    index += 74;
+  }
+  return result.join('\r\n');
+}
+
 /**
  * Generates RFC 5545 standard iCalendar (.ics) format string
  */
@@ -166,7 +178,7 @@ export function generateICSFeed(
 
   lines.push('END:VCALENDAR');
 
-  return lines.join('\r\n');
+  return lines.map(foldLine).join('\r\n');
 }
 
 /**

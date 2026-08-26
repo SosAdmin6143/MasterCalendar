@@ -11,7 +11,7 @@ interface GroupFilterBarProps {
   onOpenManageGroups: () => void;
   onOpenAddGroup: () => void;
   onOpenShareGroup?: (groupId: string) => void;
-  onFocusSubCalendar?: (groupId: string) => void;
+  onCopyAndOpenWebLink?: (groupId: string) => void;
 }
 
 export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
@@ -23,7 +23,7 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
   onOpenManageGroups,
   onOpenAddGroup,
   onOpenShareGroup,
-  onFocusSubCalendar,
+  onCopyAndOpenWebLink,
 }) => {
   const allSelected = visibleGroupIds.size === groups.length;
 
@@ -92,15 +92,15 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
 
                 {/* Direct Share & Focus Sub-Calendar Buttons */}
                 <div className="flex items-center gap-0.5 ml-1 border-l border-gray-200 dark:border-slate-800 pl-1">
-                  {onFocusSubCalendar && (
+                  {onCopyAndOpenWebLink && (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onFocusSubCalendar(group.id);
+                        onCopyAndOpenWebLink(group.id);
                       }}
                       className="px-1.5 py-0.5 rounded-full hover:bg-white dark:hover:bg-slate-800 text-[10px] font-bold text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors cursor-pointer"
-                      title={`Open ${group.name} Web Link View`}
+                      title={`Copy and open ${group.name} web link in new tab`}
                     >
                       Web Link
                     </button>
