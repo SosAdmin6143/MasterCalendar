@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarEvent, EventGroup } from '../../types/calendar';
 import { format } from 'date-fns';
-import { Clock, MapPin, Plus, Share2 } from 'lucide-react';
+import { Clock, MapPin, Plus, Share2, Box, Users } from 'lucide-react';
 
 interface GroupMatrixViewProps {
   groups: EventGroup[];
@@ -115,6 +115,20 @@ export const GroupMatrixView: React.FC<GroupMatrixViewProps> = ({
                             <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-slate-400 truncate mt-1">
                               <MapPin className="w-3 h-3 text-rose-500" />
                               <span className="truncate">{evt.location}</span>
+                            </div>
+                          )}
+
+                          {evt.attendees && evt.attendees.length > 0 && (
+                            <div className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate mt-1">
+                              <Users className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">{evt.attendees.length} Attendee(s)</span>
+                            </div>
+                          )}
+
+                          {evt.resources && evt.resources.length > 0 && (
+                            <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 font-bold truncate mt-1">
+                              <Box className="w-3 h-3 flex-shrink-0" />
+                              <span className="truncate">{evt.resources.length} Resource(s)</span>
                             </div>
                           )}
                         </div>

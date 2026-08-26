@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CalendarEvent, EventGroup } from '../../types/calendar';
 import { format, isSameDay } from 'date-fns';
-import { Search, Clock, MapPin, Users, Filter, Calendar } from 'lucide-react';
+import { Search, Clock, MapPin, Users, Filter, Calendar, Box } from 'lucide-react';
 
 interface AgendaViewProps {
   events: CalendarEvent[];
@@ -140,6 +140,44 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                             <p className="text-xs text-gray-600 dark:text-slate-400 line-clamp-1 font-normal">
                               {evt.description}
                             </p>
+                          )}
+
+                          {evt.attendees && evt.attendees.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-900/60 px-2 py-0.5 rounded-md">
+                                <Users className="w-3 h-3" />
+                                <span>{evt.attendees.length} Attendee{evt.attendees.length > 1 ? 's' : ''}:</span>
+                              </span>
+                              {evt.attendees.slice(0, 3).map((att, i) => (
+                                <span key={i} className="text-[10px] font-semibold bg-emerald-100/60 dark:bg-slate-800 text-emerald-900 dark:text-slate-200 px-2 py-0.5 rounded">
+                                  {att}
+                                </span>
+                              ))}
+                              {evt.attendees.length > 3 && (
+                                <span className="text-[10px] font-semibold text-gray-400">
+                                  +{evt.attendees.length - 3} more
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {evt.resources && evt.resources.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900/60 px-2 py-0.5 rounded-md">
+                                <Box className="w-3 h-3" />
+                                <span>{evt.resources.length} Resource{evt.resources.length > 1 ? 's' : ''}:</span>
+                              </span>
+                              {evt.resources.slice(0, 3).map((res, i) => (
+                                <span key={i} className="text-[10px] font-semibold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-2 py-0.5 rounded">
+                                  {res}
+                                </span>
+                              ))}
+                              {evt.resources.length > 3 && (
+                                <span className="text-[10px] font-semibold text-gray-400">
+                                  +{evt.resources.length - 3} more
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
 

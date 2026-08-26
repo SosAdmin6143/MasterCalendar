@@ -156,6 +156,10 @@ export function generateICSFeed(
       }
     }
 
+    if (event.resources && event.resources.length > 0) {
+      lines.push(`RESOURCES:${escapeICalText(event.resources.join(', '))}`);
+    }
+
     lines.push('STATUS:CONFIRMED');
     lines.push('END:VEVENT');
   }

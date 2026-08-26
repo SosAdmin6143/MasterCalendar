@@ -30,6 +30,7 @@ interface HeaderProps {
   onNavigateDate: (direction: 'prev' | 'next' | 'today') => void;
   onOpenShareModal: () => void;
   onOpenShareGroup?: (groupId: string) => void;
+  onFocusSubCalendar?: (groupId: string | null) => void;
   onOpenEventModal: () => void;
   onOpenAIModal: () => void;
   isDarkMode: boolean;
@@ -47,6 +48,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateDate,
   onOpenShareModal,
   onOpenShareGroup,
+  onFocusSubCalendar,
   onOpenEventModal,
   onOpenAIModal,
   isDarkMode,
@@ -303,28 +305,52 @@ export const Header: React.FC<HeaderProps> = ({
 
                   <div className="space-y-1">
                     {activeCalendar.groups.map((group) => (
-                      <button
+                      <div
                         key={group.id}
-                        onClick={() => {
-                          setShowShareDropdown(false);
-                          if (onOpenShareGroup) {
-                            onOpenShareGroup(group.id);
-                          } else {
-                            onOpenShareModal();
-                          }
-                        }}
-                        className="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition-colors cursor-pointer group/gitem"
+                        className="w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition-colors group/gitem"
                       >
-                        <div className="flex items-center gap-2 min-w-0 truncate">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowShareDropdown(false);
+                            if (onFocusSubCalendar) onFocusSubCalendar(group.id);
+                          }}
+                          className="flex items-center gap-2 min-w-0 truncate text-left flex-1 cursor-pointer"
+                        >
                           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: group.color }} />
                           <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 group-hover/gitem:text-blue-600 dark:group-hover/gitem:text-blue-400 truncate">
                             {group.name}
                           </span>
+                        </button>
+
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {onFocusSubCalendar && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowShareDropdown(false);
+                                onFocusSubCalendar(group.id);
+                              }}
+                              className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 cursor-pointer"
+                              title="Open Sub-Calendar Web Link View"
+                            >
+                              Web View
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowShareDropdown(false);
+                              if (onOpenShareGroup) onOpenShareGroup(group.id);
+                              else onOpenShareModal();
+                            }}
+                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 cursor-pointer"
+                            title="Outlook Subscription Feed"
+                          >
+                            Feed
+                          </button>
                         </div>
-                        <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover/gitem:opacity-100 transition-opacity flex-shrink-0">
-                          Share Feed →
-                        </span>
-                      </button>
+                      </div>
                     ))}
                   </div>
 

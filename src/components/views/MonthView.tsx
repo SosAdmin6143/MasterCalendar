@@ -11,7 +11,7 @@ import {
   isToday, 
   format 
 } from 'date-fns';
-import { MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock, Box, Users } from 'lucide-react';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -113,6 +113,18 @@ export const MonthView: React.FC<MonthViewProps> = ({
                     >
                       <div className="truncate flex items-center gap-1.5 min-w-0">
                         <span className="font-semibold truncate text-gray-900 dark:text-slate-100">{evt.title}</span>
+                        {evt.attendees && evt.attendees.length > 0 && (
+                          <span className="inline-flex items-center text-[9px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-1 py-0.2 rounded" title={`${evt.attendees.length} Attendees: ${evt.attendees.join(', ')}`}>
+                            <Users className="w-2.5 h-2.5 mr-0.5" />
+                            {evt.attendees.length}
+                          </span>
+                        )}
+                        {evt.resources && evt.resources.length > 0 && (
+                          <span className="inline-flex items-center text-[9px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-950 px-1 py-0.2 rounded" title={`${evt.resources.length} Resources: ${evt.resources.join(', ')}`}>
+                            <Box className="w-2.5 h-2.5 mr-0.5" />
+                            {evt.resources.length}
+                          </span>
+                        )}
                       </div>
                       {!evt.isAllDay && (
                         <span className="text-[10px] text-gray-500 dark:text-slate-400 font-semibold uppercase flex-shrink-0 hidden md:inline">

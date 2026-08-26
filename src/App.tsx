@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { SharedCalendar, CalendarEvent, EventGroup, CalendarViewMode } from './types/calendar';
 import { Header } from './components/Header';
 import { GroupFilterBar } from './components/GroupFilterBar';
@@ -13,11 +13,17 @@ import { EventModal } from './components/modals/EventModal';
 import { GroupManageModal } from './components/modals/GroupManageModal';
 import { AIAssistantModal } from './components/modals/AIAssistantModal';
 
+import { Globe, Link as LinkIcon, Check, Eye, RefreshCw, Layers, Sparkles } from 'lucide-react';
+
 export default function App() {
   const [calendars, setCalendars] = useState<SharedCalendar[]>([]);
   const [activeCalendarId, setActiveCalendarId] = useState<string>('cal-default');
   const [loading, setLoading] = useState<boolean>(true);
   
+  // Focused Sub-Calendar Web View state
+  const [focusedSubCalendarId, setFocusedSubCalendarId] = useState<string | null>(null);
+  const [copiedSubLink, setCopiedSubLink] = useState<boolean>(false);
+
   // Active state filters & date controls
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -52,10 +58,38 @@ export default function App() {
   const [groupModalCreateMode, setGroupModalCreateMode] = useState<boolean>(false);
   const [showAIModal, setShowAIModal] = useState<boolean>(false);
 
-  // Fetch calendars on mount
+  // Fetch calendars on mount & setup real-time sync
   useEffect(() => {
     fetchCalendars();
+
+    // Auto-sync every 8 seconds for real-time Master Calendar synchronization across shared links
+    const syncInterval = setInterval(() => {
+      fetchCalendarsSilent();
+    }, 8000);
+
+    const handleFocus = () => fetchCalendarsSilent();
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
+
+  const parseUrlSubCalendar = useCallback((calendarList: SharedCalendar[]) => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const subParam = params.get('subcalendar') || params.get('group') || params.get('sub');
+    
+    if (subParam) {
+      const activeCal = calendarList.find((c) => c.id === activeCalendarId) || calendarList[0];
+      if (activeCal && activeCal.groups.some((g) => g.id === subParam)) {
+        setFocusedSubCalendarId(subParam);
+        setVisibleGroupIds(new Set([subParam]));
+        return;
+      }
+    }
+  }, [activeCalendarId]);
 
   const fetchCalendars = async () => {
     try {
@@ -67,14 +101,92 @@ export default function App() {
         if (list.length > 0) {
           const current = list.find((c) => c.id === activeCalendarId) || list[0];
           setActiveCalendarId(current.id);
-          // Initialize visible groups to all
-          setVisibleGroupIds(new Set(current.groups.map((g) => g.id)));
+          
+          // Check URL parameter for focused sub-calendar
+          const params = new URLSearchParams(window.location.search);
+          const subParam = params.get('subcalendar') || params.get('group') || params.get('sub');
+          
+          if (subParam && current.groups.some((g) => g.id === subParam)) {
+            setFocusedSubCalendarId(subParam);
+            setVisibleGroupIds(new Set([subParam]));
+          } else {
+            setVisibleGroupIds(new Set(current.groups.map((g) => g.id)));
+          }
         }
       }
     } catch (err) {
       console.error('Failed to load calendars', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCalendarsSilent = async () => {
+    try {
+      const res = await fetch('/api/calendars');
+      if (res.ok) {
+        const list: SharedCalendar[] = await res.json();
+        setCalendars(list);
+      }
+    } catch (err) {
+      console.error('Silent sync failed', err);
+    }
+  };
+
+  // Handle focusing a specific Sub-Calendar and updating URL search parameters
+  const handleFocusSubCalendar = (groupId: string | null) => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+
+    if (groupId) {
+      setFocusedSubCalendarId(groupId);
+      setVisibleGroupIds(new Set([groupId]));
+      url.searchParams.set('subcalendar', groupId);
+    } else {
+      setFocusedSubCalendarId(null);
+      url.searchParams.delete('subcalendar');
+      url.searchParams.delete('group');
+      url.searchParams.delete('sub');
+      if (activeCalendar) {
+        setVisibleGroupIds(new Set(activeCalendar.groups.map((g) => g.id)));
+      }
+    }
+
+    window.history.pushState({}, '', url.toString());
+  };
+
+  const handleCopySubCalendarWebLink = (groupId: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const shareUrl = `${origin}/?subcalendar=${groupId}`;
+
+    const fallbackCopy = (content: string) => {
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedSubLink(true);
+        setTimeout(() => setCopiedSubLink(false), 2000);
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareUrl).then(
+        () => {
+          setCopiedSubLink(true);
+          setTimeout(() => setCopiedSubLink(false), 2000);
+        },
+        () => fallbackCopy(shareUrl)
+      );
+    } else {
+      fallbackCopy(shareUrl);
     }
   };
 
@@ -90,6 +202,10 @@ export default function App() {
     }
     return map;
   }, [activeCalendar]);
+
+  const focusedGroup = useMemo(() => {
+    return focusedSubCalendarId ? groupsMap.get(focusedSubCalendarId) : null;
+  }, [focusedSubCalendarId, groupsMap]);
 
   // Sync visible groups when active calendar changes
   useEffect(() => {
@@ -208,6 +324,7 @@ export default function App() {
         end: eventData.end || new Date(Date.now() + 3600000).toISOString(),
         isAllDay: eventData.isAllDay || false,
         attendees: eventData.attendees || [],
+        resources: eventData.resources || [],
         recurrence: eventData.recurrence || 'none',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -342,6 +459,7 @@ export default function App() {
           setShareInitialGroupId(groupId);
           setShowShareModal(true);
         }}
+        onFocusSubCalendar={handleFocusSubCalendar}
         onOpenEventModal={() => {
           setEditingEvent(null);
           setEventInitialDate(new Date());
@@ -358,6 +476,7 @@ export default function App() {
         visibleGroupIds={visibleGroupIds}
         onToggleGroup={handleToggleGroup}
         onToggleAll={handleToggleAllGroups}
+        onFocusSubCalendar={handleFocusSubCalendar}
         onOpenShareGroup={(groupId) => {
           setShareInitialGroupId(groupId);
           setShowShareModal(true);
@@ -371,6 +490,71 @@ export default function App() {
           setShowGroupModal(true);
         }}
       />
+
+      {/* Focused Sub-Calendar Banner */}
+      {focusedGroup && (
+        <div className="mx-4 sm:mx-6 lg:mx-8 mt-3.5 p-3.5 rounded-xl bg-gradient-to-r from-purple-50 via-blue-50 to-emerald-50 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border border-purple-200/80 dark:border-purple-900/50 shadow-2xs flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3 min-w-0">
+            <span
+              className="w-3.5 h-3.5 rounded-full flex-shrink-0 ring-2 ring-white dark:ring-slate-800"
+              style={{ backgroundColor: focusedGroup.color }}
+            />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                  {focusedGroup.name} Sub-Calendar
+                </h2>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                  Standalone Sub-Calendar Link View
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-slate-400 font-medium flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="truncate">{focusedGroup.description || 'Dedicated sub-calendar view'}</span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100/60 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-900">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Synced with Master Calendar
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Copy shareable web link */}
+            <button
+              type="button"
+              onClick={() => handleCopySubCalendarWebLink(focusedGroup.id)}
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-slate-200 border border-gray-200 dark:border-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              title="Copy shareable browser web link for this sub-calendar"
+            >
+              {copiedSubLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <LinkIcon className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
+              <span>{copiedSubLink ? 'Web Link Copied!' : 'Copy Shareable Web Link'}</span>
+            </button>
+
+            {/* Outlook Subscription modal trigger */}
+            <button
+              type="button"
+              onClick={() => {
+                setShareInitialGroupId(focusedGroup.id);
+                setShowShareModal(true);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Outlook Feed</span>
+            </button>
+
+            {/* Switch to Full Master Calendar */}
+            <button
+              type="button"
+              onClick={() => handleFocusSubCalendar(null)}
+              className="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-slate-950 hover:bg-gray-800 dark:hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              <Eye className="w-3.5 h-3.5 text-blue-400" />
+              <span>View Full Master Calendar</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Calendar View Area */}
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col min-h-[calc(100vh-140px)]">

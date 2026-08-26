@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarEvent, EventGroup } from '../../types/calendar';
 import { isSameDay, format } from 'date-fns';
-import { Clock, MapPin, Users, Calendar, Plus, Tag } from 'lucide-react';
+import { Clock, MapPin, Users, Calendar, Plus, Tag, Box } from 'lucide-react';
 
 interface DayViewProps {
   currentDate: Date;
@@ -124,10 +124,17 @@ export const DayView: React.FC<DayViewProps> = ({
                         </div>
                       )}
 
+                      {evt.resources && evt.resources.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900/60">
+                          <Box className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                          <span>{evt.resources.length} Resource(s): {evt.resources.join(', ')}</span>
+                        </div>
+                      )}
+
                       {evt.attendees && evt.attendees.length > 0 && (
-                        <div className="flex items-center gap-1.5 text-gray-600 dark:text-slate-400">
+                        <div className="flex items-center gap-1.5 text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/60">
                           <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          <span>{evt.attendees.length} attendee(s)</span>
+                          <span>{evt.attendees.length} Attendee(s): {evt.attendees.join(', ')}</span>
                         </div>
                       )}
                     </div>

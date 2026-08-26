@@ -8,7 +8,7 @@ import {
   isToday, 
   format 
 } from 'date-fns';
-import { Clock, MapPin } from 'lucide-react';
+import { Clock, MapPin, Box, Users } from 'lucide-react';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -139,6 +139,20 @@ export const WeekView: React.FC<WeekViewProps> = ({
                           {format(startDate, 'h:mm a')} - {format(endDate, 'h:mm a')}
                         </div>
                       </div>
+
+                      {evt.attendees && evt.attendees.length > 0 && (
+                        <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mt-1 truncate">
+                          <Users className="w-2.5 h-2.5 flex-shrink-0" />
+                          <span className="truncate">{evt.attendees.length} Attendee{evt.attendees.length > 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+
+                      {evt.resources && evt.resources.length > 0 && (
+                        <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1 truncate">
+                          <Box className="w-2.5 h-2.5 flex-shrink-0" />
+                          <span className="truncate">{evt.resources.length} Resource{evt.resources.length > 1 ? 's' : ''}</span>
+                        </div>
+                      )}
 
                       {evt.location && (
                         <div className="text-[10px] text-gray-500 dark:text-slate-400 truncate flex items-center gap-1 mt-1 font-medium">

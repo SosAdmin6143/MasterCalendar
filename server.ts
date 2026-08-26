@@ -100,6 +100,7 @@ const defaultEvents: CalendarEvent[] = [
     isAllDay: false,
     organizer: 'Release Manager <releases@company.com>',
     attendees: ['engineering@company.com', 'qa@company.com'],
+    resources: ['K8s Release Console', 'Release Runbook Doc', 'DevOps Call Phone'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -115,6 +116,7 @@ const defaultEvents: CalendarEvent[] = [
     isAllDay: false,
     organizer: 'Sarah Jenkins <sjenkins@company.com>',
     attendees: ['all-hands@company.com'],
+    resources: ['Main Auditorium AV System', 'Wireless Mics (x2)', 'HDMI Presentation Cart', 'Livestream Recording Rig'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -130,6 +132,7 @@ const defaultEvents: CalendarEvent[] = [
     isAllDay: true,
     organizer: 'DevOps Lead <devops@company.com>',
     attendees: ['arivera@company.com'],
+    resources: ['PagerDuty Escalation Laptop', 'Emergency Satellite Phone'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -144,6 +147,7 @@ const defaultEvents: CalendarEvent[] = [
     end: getRelativeDate(3, 11, 0),
     isAllDay: false,
     organizer: 'Culture Squad <culture@company.com>',
+    resources: ['Commercial Espresso Machine', 'Lounge Sound System', 'Pastry Catering Trays'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -158,6 +162,7 @@ const defaultEvents: CalendarEvent[] = [
     end: getRelativeDate(-1, 14, 0),
     isAllDay: false,
     organizer: 'David Kim <dkim@company.com>',
+    resources: ['Figma Design Spec Board', '4K Color Spectrum Display'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -172,6 +177,7 @@ const defaultEvents: CalendarEvent[] = [
     end: getRelativeDate(4, 16, 30),
     isAllDay: false,
     organizer: 'IT Enablement <it@company.com>',
+    resources: ['Training Room B Projector', '20x Participant Laptops', 'Webex Audio Pod'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

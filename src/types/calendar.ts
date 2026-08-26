@@ -19,6 +19,7 @@ export interface CalendarEvent {
   end: string;   // ISO String (e.g., 2026-08-25T11:00:00.000Z)
   isAllDay?: boolean;
   attendees?: string[]; // Array of emails or names
+  resources?: string[]; // Array of equipment, room, tools, or assets added
   organizer?: string;
   recurrence?: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
   url?: string;

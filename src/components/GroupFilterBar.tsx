@@ -11,6 +11,7 @@ interface GroupFilterBarProps {
   onOpenManageGroups: () => void;
   onOpenAddGroup: () => void;
   onOpenShareGroup?: (groupId: string) => void;
+  onFocusSubCalendar?: (groupId: string) => void;
 }
 
 export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
@@ -22,6 +23,7 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
   onOpenManageGroups,
   onOpenAddGroup,
   onOpenShareGroup,
+  onFocusSubCalendar,
 }) => {
   const allSelected = visibleGroupIds.size === groups.length;
 
@@ -88,20 +90,36 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
                   {isVisible && <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />}
                 </button>
 
-                {/* Direct Share Button for this Group */}
-                {onOpenShareGroup && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenShareGroup(group.id);
-                    }}
-                    className="p-1 rounded-full hover:bg-white/80 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors ml-0.5 cursor-pointer"
-                    title={`Share ${group.name} feed directly`}
-                  >
-                    <Share2 className="w-3 h-3" />
-                  </button>
-                )}
+                {/* Direct Share & Focus Sub-Calendar Buttons */}
+                <div className="flex items-center gap-0.5 ml-1 border-l border-gray-200 dark:border-slate-800 pl-1">
+                  {onFocusSubCalendar && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFocusSubCalendar(group.id);
+                      }}
+                      className="px-1.5 py-0.5 rounded-full hover:bg-white dark:hover:bg-slate-800 text-[10px] font-bold text-gray-600 dark:text-slate-300 hover:text-blue-600 transition-colors cursor-pointer"
+                      title={`Open ${group.name} Web Link View`}
+                    >
+                      Web Link
+                    </button>
+                  )}
+
+                  {onOpenShareGroup && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenShareGroup(group.id);
+                      }}
+                      className="p-1 rounded-full hover:bg-white/80 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                      title={`Share ${group.name} feed & links`}
+                    >
+                      <Share2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

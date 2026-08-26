@@ -46,6 +46,9 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
 
   const httpUrl = `${origin}${feedPath}`;
   const webcalUrl = `webcal://${cleanHost}${feedPath}`;
+  const webAppShareUrl = selectedGroupId === 'ALL' 
+    ? origin 
+    : `${origin}/?subcalendar=${selectedGroupId}`;
 
   const isLocalIp = /^https?:\/\/(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|127\.|localhost)/i.test(origin);
 
@@ -327,12 +330,52 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                 </div>
               )}
 
+              {/* Direct Web Application Link Box */}
+              <div className="space-y-2 p-3.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/50">
+                <label className="text-xs font-bold uppercase tracking-widest text-purple-950 dark:text-purple-200 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>1. Shareable Browser Web Link (Direct App View)</span>
+                  </span>
+                  <span className="text-[10px] text-purple-700 dark:text-purple-300 font-bold bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800">
+                    {selectedGroupId === 'ALL' ? 'Full Master View' : 'Sub-Calendar Web View'}
+                  </span>
+                </label>
+                <p className="text-[11px] text-purple-900 dark:text-purple-300 font-medium leading-relaxed">
+                  Anyone opening this web link in their browser will view <strong>{selectedGroupId === 'ALL' ? 'the Master Calendar' : `only the ${groups.find(g => g.id === selectedGroupId)?.name || 'selected'} sub-calendar`}</strong>, live-synced in real time with the Master Calendar database.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    readOnly
+                    value={webAppShareUrl}
+                    className="flex-1 bg-white dark:bg-slate-950 border border-purple-200 dark:border-slate-800 rounded-lg px-3.5 py-2 text-xs text-purple-950 dark:text-purple-100 font-mono select-all focus:outline-none focus:ring-2 focus:ring-purple-500 font-semibold shadow-2xs"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(webAppShareUrl, 'webapp')}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer"
+                  >
+                    {copiedType === 'webapp' ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedType === 'webapp' ? 'Copied Link!' : 'Copy Web Link'}</span>
+                  </button>
+                  <a
+                    href={webAppShareUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-lg bg-white dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-slate-700 transition-colors"
+                    title="Open Web Link in New Tab"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+
               {/* Webcal Link Box */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500 flex items-center justify-between">
-                  <span>1. One-Click Webcal Subscription Link (Recommended)</span>
+                  <span>2. One-Click Webcal Subscription Link (Outlook Desktop / Apple)</span>
                   <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/60">
-                    Opens Outlook Directly
+                    Opens Outlook App Directly
                   </span>
                 </label>
                 <div className="flex items-center gap-2">
@@ -362,7 +405,7 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
               {/* Standard HTTP ICS Feed Link Box */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">
-                  2. Standard iCal Feed HTTP URL (For Outlook Web & Google/Apple Calendar)
+                  3. Standard iCal Feed HTTP URL (For Outlook Web & Google Calendar)
                 </label>
                 <div className="flex items-center gap-2">
                   <input
