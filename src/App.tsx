@@ -12,6 +12,7 @@ import { OutlookShareModal } from './components/modals/OutlookShareModal';
 import { EventModal } from './components/modals/EventModal';
 import { GroupManageModal } from './components/modals/GroupManageModal';
 import { AIAssistantModal } from './components/modals/AIAssistantModal';
+import { getPublicOrigin } from './utils/urlHelper';
 
 import { Globe, Link as LinkIcon, Check, Eye, RefreshCw, Layers, Sparkles } from 'lucide-react';
 
@@ -156,7 +157,7 @@ export default function App() {
   };
 
   const handleCopySubCalendarWebLink = (groupId: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const origin = getPublicOrigin() || (typeof window !== 'undefined' ? window.location.origin : '');
     const shareUrl = `${origin}/?subcalendar=${groupId}`;
 
     const fallbackCopy = (content: string) => {

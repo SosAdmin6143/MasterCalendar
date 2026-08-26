@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { SharedCalendar, EventGroup } from '../../types/calendar';
 import { generateICSFeed } from '../../utils/icsGenerator';
+import { getPublicOrigin } from '../../utils/urlHelper';
 
 interface OutlookShareModalProps {
   calendar: SharedCalendar;
@@ -36,8 +37,8 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [guidePlatform, setGuidePlatform] = useState<'outlook-web' | 'outlook-desktop' | 'outlook-mobile' | 'apple-google'>('outlook-web');
 
-  // Build origin URL dynamically
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://colorcal.app';
+  // Build public origin URL dynamically (mapping dev URLs to live published server)
+  const origin = getPublicOrigin() || (typeof window !== 'undefined' ? window.location.origin : 'https://colorcal.app');
   const cleanHost = origin.replace(/^https?:\/\//, '');
 
   const feedPath = selectedGroupId === 'ALL'
