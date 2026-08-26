@@ -315,21 +315,19 @@ export default function App() {
 
   // --- Event CRUD ---
 
-  const handleSaveEvent = (eventData: Partial<CalendarEvent>, notifyEmail: boolean, notifyTeams: boolean) => {
+  const handleSaveEvent = (eventData: Partial<CalendarEvent>) => {
     if (!activeCalendar) return;
 
     let updatedEvents = [...activeCalendar.events];
-    let finalEvent: CalendarEvent;
 
     if (eventData.id) {
       // Edit existing event
-      finalEvent = { ...updatedEvents.find(e => e.id === eventData.id), ...eventData } as CalendarEvent;
       updatedEvents = updatedEvents.map((e) =>
-        e.id === eventData.id ? finalEvent : e
+        e.id === eventData.id ? ({ ...e, ...eventData } as CalendarEvent) : e
       );
     } else {
       // Create new event
-      finalEvent = {
+      const newEvent: CalendarEvent = {
         id: 'evt-' + Date.now().toString(36),
         calendarId: activeCalendar.id,
         groupId: eventData.groupId || activeCalendar.groups[0]?.id || 'grp-1',
@@ -345,27 +343,11 @@ export default function App() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      updatedEvents.push(finalEvent);
+      updatedEvents.push(newEvent);
     }
 
     const updatedCal = { ...activeCalendar, events: updatedEvents };
     saveCalendar(updatedCal);
-
-    if (notifyEmail || notifyTeams) {
-      const group = activeCalendar.groups.find(g => g.id === finalEvent.groupId);
-      fetch('/api/notifications/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: finalEvent,
-          group,
-          calendarName: activeCalendar.name,
-          notifyEmail,
-          notifyTeams,
-          type: eventData.id ? 'update' : 'create'
-        })
-      }).catch(err => console.error("Notification failed", err));
-    }
 
     setShowEventModal(false);
     setEditingEvent(null);

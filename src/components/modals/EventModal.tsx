@@ -28,7 +28,7 @@ interface EventModalProps {
   initialDate?: Date;
   initialGroupId?: string;
   isSubCalendarLocked?: boolean;
-  onSave: (event: Partial<CalendarEvent>, notifyEmail: boolean, notifyTeams: boolean) => void;
+  onSave: (event: Partial<CalendarEvent>) => void;
   onDelete?: (eventId: string) => void;
   onClose: () => void;
 }
@@ -119,8 +119,6 @@ export const EventModal: React.FC<EventModalProps> = ({
   const [newResourceInput, setNewResourceInput] = useState('');
   const [copiedResourceIndex, setCopiedResourceIndex] = useState<number | null>(null);
 
-  const [notifyEmail, setNotifyEmail] = useState(false);
-  const [notifyTeams, setNotifyTeams] = useState(false);
 
   const handleAddAttendee = (attendeeEmail?: string) => {
     const emailToAdd = attendeeEmail || newAttendeeInput;
@@ -139,7 +137,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         id: editingEvent.id,
         attendees: updated,
         updatedAt: new Date().toISOString()
-      }, false, false);
+      });
     }
   };
 
@@ -152,7 +150,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         id: editingEvent.id,
         attendees: updated,
         updatedAt: new Date().toISOString()
-      }, false, false);
+      });
     }
   };
 
@@ -172,7 +170,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         id: editingEvent.id,
         resources: updated,
         updatedAt: new Date().toISOString()
-      }, false, false);
+      });
     }
   };
 
@@ -185,7 +183,7 @@ export const EventModal: React.FC<EventModalProps> = ({
         id: editingEvent.id,
         resources: updated,
         updatedAt: new Date().toISOString()
-      }, false, false);
+      });
     }
   };
 
@@ -209,7 +207,7 @@ export const EventModal: React.FC<EventModalProps> = ({
       updatedAt: new Date().toISOString(),
     };
 
-    onSave(eventData, notifyEmail, notifyTeams);
+    onSave(eventData);
   };
 
   const selectedGroup = groups.find((g) => g.id === groupId);
@@ -823,32 +821,6 @@ export const EventModal: React.FC<EventModalProps> = ({
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Notifications Options */}
-            <div className="pt-2 border-t border-gray-100 dark:border-slate-800 space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notifyEmail}
-                  onChange={(e) => setNotifyEmail(e.target.checked)}
-                  className="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800"
-                />
-                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                  Notify attendees via Email
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notifyTeams}
-                  onChange={(e) => setNotifyTeams(e.target.checked)}
-                  className="rounded border-gray-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-slate-800"
-                />
-                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
-                  Post update to Microsoft Teams (if configured)
-                </span>
-              </label>
             </div>
 
             {/* Footer Actions */}
