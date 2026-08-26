@@ -47,6 +47,8 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
   const httpUrl = `${origin}${feedPath}`;
   const webcalUrl = `webcal://${cleanHost}${feedPath}`;
 
+  const isLocalIp = /^https?:\/\/(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|127\.|localhost)/i.test(origin);
+
   const copyToClipboard = (text: string, type: string) => {
     const fallbackCopy = (content: string) => {
       const textArea = document.createElement('textarea');
@@ -278,9 +280,25 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                   <strong className="text-blue-950 dark:text-blue-100 font-bold block mb-0.5">
                     Currently Selected Feed Scope: {selectedGroupId === 'ALL' ? '📅 Master Calendar (All Groups)' : `📂 Only ${groups.find(g => g.id === selectedGroupId)?.name || 'Selected Group'}`}
                   </strong>
-                  Subscribe in Outlook using either the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">webcal://</code> link or the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">https://</code> feed URL. Events update automatically in Outlook every 15 minutes!
+                  Subscribe in Outlook using either the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">webcal://</code> link or the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">http://</code> feed URL.
                 </div>
               </div>
+
+              {/* Local LAN IP Alert Box for Outlook Web / Microsoft 365 */}
+              {isLocalIp && (
+                <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
+                  <div className="font-bold flex items-center gap-1.5 text-amber-950 dark:text-amber-100">
+                    <span>⚠️ Note for Outlook Web / Microsoft 365 Subscribers</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    You are connected via a local network IP (<code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded font-bold">{cleanHost.split(':')[0]}</code>). Microsoft's cloud servers cannot reach internal LAN IP addresses over the internet.
+                  </p>
+                  <div className="pt-1 font-medium space-y-1 text-[11px]">
+                    <div>• <strong>For Outlook Web (Subscribe from Web):</strong> Open this app in your browser using your server's <strong>Public IP Address</strong> so Outlook's cloud servers can connect. Use the <strong>Standard iCal Feed HTTP URL (Link 2)</strong> when pasting.</div>
+                    <div>• <strong>For Local Import:</strong> Click <strong>"Upload from file"</strong> on the left side menu in Outlook and select the downloaded <code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded">.ics</code> file below.</div>
+                  </div>
+                </div>
+              )}
 
               {/* Webcal Link Box */}
               <div className="space-y-2">

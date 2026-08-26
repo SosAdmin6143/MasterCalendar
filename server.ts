@@ -350,6 +350,7 @@ async function startServer() {
     const icsContent = generateICSFeed(cal, groupId, appUrl);
 
     // Set headers required for Outlook subscription feeds
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="${cal.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.ics"`);
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
