@@ -276,13 +276,35 @@ async function startServer() {
   // --- API ENDPOINTS ---
 
   // Get all calendars
-  app.get('/api/calendars', (req, res) => {
+  app.get('/api/calendars', async (req, res) => {
+    if (dbPool) {
+      try {
+        const result = await dbPool.query('SELECT data FROM calendars');
+        const list = result.rows.map(row => row.data as SharedCalendar);
+        list.forEach(cal => calendarsStore.set(cal.id, cal)); // sync cache
+        return res.json(list);
+      } catch (err) {
+        console.error('Failed to fetch calendars from DB:', err);
+      }
+    }
     const list = Array.from(calendarsStore.values());
     res.json(list);
   });
 
   // Get single calendar
-  app.get('/api/calendars/:id', (req, res) => {
+  app.get('/api/calendars/:id', async (req, res) => {
+    if (dbPool) {
+      try {
+        const result = await dbPool.query('SELECT data FROM calendars WHERE id = $1', [req.params.id]);
+        if (result.rows.length > 0) {
+          const cal = result.rows[0].data as SharedCalendar;
+          calendarsStore.set(cal.id, cal); // sync cache
+          return res.json(cal);
+        }
+      } catch (err) {
+        console.error('Failed to fetch single calendar from DB:', err);
+      }
+    }
     const cal = calendarsStore.get(req.params.id);
     if (!cal) {
       return res.status(404).json({ error: 'Calendar not found' });
@@ -343,8 +365,21 @@ async function startServer() {
   // --- CRITICAL OUTLOOK ICAL / WEBCAL FEED ENDPOINTS ---
   
   // Full calendar feed (.ics or webcal)
-  const serveICal = (req: express.Request, res: express.Response, calId: string, groupId?: string) => {
-    const cal = calendarsStore.get(calId);
+  const serveICal = async (req: express.Request, res: express.Response, calId: string, groupId?: string) => {
+    let cal = calendarsStore.get(calId);
+    
+    if (dbPool) {
+      try {
+        const result = await dbPool.query('SELECT data FROM calendars WHERE id = $1', [calId]);
+        if (result.rows.length > 0) {
+          cal = result.rows[0].data as SharedCalendar;
+          calendarsStore.set(cal.id, cal);
+        }
+      } catch (err) {
+        console.error('Failed to fetch calendar from DB for ICS feed:', err);
+      }
+    }
+
     if (!cal) {
       return res.status(404).send('Calendar not found');
     }

@@ -1,4 +1,10 @@
 export function getPublicOrigin(): string {
+  // Allow overriding the base URL via environment variable for custom domains or obfuscating internal IPs
+  if (import.meta.env && import.meta.env.VITE_PUBLIC_BASE_URL) {
+    // Remove trailing slash if present
+    return import.meta.env.VITE_PUBLIC_BASE_URL.replace(/\/$/, '');
+  }
+
   if (typeof window === 'undefined') return '';
   let origin = window.location.origin;
   

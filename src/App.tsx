@@ -59,6 +59,12 @@ export default function App() {
   const [groupModalCreateMode, setGroupModalCreateMode] = useState<boolean>(false);
   const [showAIModal, setShowAIModal] = useState<boolean>(false);
 
+  // Master Calendar Lock State
+  const REQUIRED_MASTER_PASSWORD = import.meta.env.VITE_MASTER_PASSWORD;
+  const [isMasterLocked, setIsMasterLocked] = useState<boolean>(!!REQUIRED_MASTER_PASSWORD);
+  const [masterPasswordInput, setMasterPasswordInput] = useState<string>('');
+  const [masterPasswordError, setMasterPasswordError] = useState<boolean>(false);
+
   // Fetch calendars on mount & setup real-time sync
   useEffect(() => {
     fetchCalendars();
@@ -436,6 +442,57 @@ export default function App() {
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500">Loading Master Calendar Workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Master Lock Screen
+  if (isMasterLocked && !focusedSubCalendarId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-slate-800 text-center">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <span className="text-2xl text-blue-600 dark:text-blue-400">🔒</span>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Master Calendar Locked</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
+            Please enter the master password to access the full calendar workspace, or use a specific sub-calendar link.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (masterPasswordInput === REQUIRED_MASTER_PASSWORD) {
+                setIsMasterLocked(false);
+                setMasterPasswordError(false);
+              } else {
+                setMasterPasswordError(true);
+              }
+            }}
+            className="flex flex-col gap-4"
+          >
+            <div>
+              <input
+                type="password"
+                placeholder="Enter password..."
+                value={masterPasswordInput}
+                onChange={(e) => setMasterPasswordInput(e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-slate-950 border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  masterPasswordError ? 'border-red-500 bg-red-50 dark:bg-red-950/30' : 'border-gray-200 dark:border-slate-800'
+                }`}
+                autoFocus
+              />
+              {masterPasswordError && (
+                <p className="text-xs text-red-600 dark:text-red-400 font-semibold mt-2">Incorrect password.</p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3 rounded-xl transition-colors"
+            >
+              Unlock Workspace
+            </button>
+          </form>
         </div>
       </div>
     );
