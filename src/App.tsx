@@ -207,12 +207,16 @@ export default function App() {
     return focusedSubCalendarId ? groupsMap.get(focusedSubCalendarId) : null;
   }, [focusedSubCalendarId, groupsMap]);
 
-  // Sync visible groups when active calendar changes
+  // Sync visible groups when active calendar changes or focused sub-calendar changes
   useEffect(() => {
     if (activeCalendar && activeCalendar.groups) {
-      setVisibleGroupIds(new Set(activeCalendar.groups.map((g) => g.id)));
+      if (focusedSubCalendarId) {
+        setVisibleGroupIds(new Set([focusedSubCalendarId]));
+      } else {
+        setVisibleGroupIds(new Set(activeCalendar.groups.map((g) => g.id)));
+      }
     }
-  }, [activeCalendar?.id]);
+  }, [activeCalendar?.id, focusedSubCalendarId]);
 
   // Filter events based on visible group IDs
   const filteredEvents = useMemo(() => {
@@ -451,8 +455,10 @@ export default function App() {
         onNavigateDate={handleNavigateDate}
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        isSubCalendarMode={Boolean(focusedSubCalendarId)}
+        focusedGroup={focusedGroup}
         onOpenShareModal={() => {
-          setShareInitialGroupId('ALL');
+          setShareInitialGroupId(focusedSubCalendarId || 'ALL');
           setShowShareModal(true);
         }}
         onOpenShareGroup={(groupId) => {
@@ -463,40 +469,42 @@ export default function App() {
         onOpenEventModal={() => {
           setEditingEvent(null);
           setEventInitialDate(new Date());
-          setEventInitialGroupId(undefined);
+          setEventInitialGroupId(focusedSubCalendarId || undefined);
           setShowEventModal(true);
         }}
         onOpenAIModal={() => setShowAIModal(true)}
       />
 
-      {/* Group Color Filter Bar */}
-      <GroupFilterBar
-        groups={activeCalendar.groups}
-        events={activeCalendar.events}
-        visibleGroupIds={visibleGroupIds}
-        onToggleGroup={handleToggleGroup}
-        onToggleAll={handleToggleAllGroups}
-        onFocusSubCalendar={handleFocusSubCalendar}
-        onOpenShareGroup={(groupId) => {
-          setShareInitialGroupId(groupId);
-          setShowShareModal(true);
-        }}
-        onOpenManageGroups={() => {
-          setGroupModalCreateMode(false);
-          setShowGroupModal(true);
-        }}
-        onOpenAddGroup={() => {
-          setGroupModalCreateMode(true);
-          setShowGroupModal(true);
-        }}
-      />
+      {/* Group Color Filter Bar (Only shown on Master Calendar) */}
+      {!focusedSubCalendarId && (
+        <GroupFilterBar
+          groups={activeCalendar.groups}
+          events={activeCalendar.events}
+          visibleGroupIds={visibleGroupIds}
+          onToggleGroup={handleToggleGroup}
+          onToggleAll={handleToggleAllGroups}
+          onFocusSubCalendar={handleFocusSubCalendar}
+          onOpenShareGroup={(groupId) => {
+            setShareInitialGroupId(groupId);
+            setShowShareModal(true);
+          }}
+          onOpenManageGroups={() => {
+            setGroupModalCreateMode(false);
+            setShowGroupModal(true);
+          }}
+          onOpenAddGroup={() => {
+            setGroupModalCreateMode(true);
+            setShowGroupModal(true);
+          }}
+        />
+      )}
 
-      {/* Focused Sub-Calendar Banner */}
+      {/* Focused Sub-Calendar Banner (Only shown in Standalone Sub-Calendar Link View) */}
       {focusedGroup && (
         <div className="mx-4 sm:mx-6 lg:mx-8 mt-3.5 p-3.5 rounded-xl bg-gradient-to-r from-purple-50 via-blue-50 to-emerald-50 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border border-purple-200/80 dark:border-purple-900/50 shadow-2xs flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200">
           <div className="flex items-center gap-3 min-w-0">
             <span
-              className="w-3.5 h-3.5 rounded-full flex-shrink-0 ring-2 ring-white dark:ring-slate-800"
+              className="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-2xs"
               style={{ backgroundColor: focusedGroup.color }}
             />
             <div className="min-w-0">
@@ -505,7 +513,7 @@ export default function App() {
                   {focusedGroup.name} Sub-Calendar
                 </h2>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                  Standalone Sub-Calendar Link View
+                  Sub-Calendar Shared View
                 </span>
               </div>
               <p className="text-xs text-gray-600 dark:text-slate-400 font-medium flex items-center gap-2 mt-0.5 flex-wrap">
@@ -527,7 +535,7 @@ export default function App() {
               title="Copy shareable browser web link for this sub-calendar"
             >
               {copiedSubLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <LinkIcon className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
-              <span>{copiedSubLink ? 'Web Link Copied!' : 'Copy Shareable Web Link'}</span>
+              <span>{copiedSubLink ? 'Web Link Copied!' : 'Copy Web Link'}</span>
             </button>
 
             {/* Outlook Subscription modal trigger */}
@@ -541,16 +549,6 @@ export default function App() {
             >
               <Globe className="w-3.5 h-3.5" />
               <span>Outlook Feed</span>
-            </button>
-
-            {/* Switch to Full Master Calendar */}
-            <button
-              type="button"
-              onClick={() => handleFocusSubCalendar(null)}
-              className="px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-slate-950 hover:bg-gray-800 dark:hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-            >
-              <Eye className="w-3.5 h-3.5 text-blue-400" />
-              <span>View Full Master Calendar</span>
             </button>
           </div>
         </div>
@@ -662,6 +660,7 @@ export default function App() {
           editingEvent={editingEvent}
           initialDate={eventInitialDate}
           initialGroupId={eventInitialGroupId}
+          isSubCalendarLocked={Boolean(focusedSubCalendarId)}
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
           onClose={() => {

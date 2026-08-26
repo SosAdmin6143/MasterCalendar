@@ -27,6 +27,7 @@ interface EventModalProps {
   editingEvent?: CalendarEvent | null;
   initialDate?: Date;
   initialGroupId?: string;
+  isSubCalendarLocked?: boolean;
   onSave: (event: Partial<CalendarEvent>) => void;
   onDelete?: (eventId: string) => void;
   onClose: () => void;
@@ -59,6 +60,7 @@ export const EventModal: React.FC<EventModalProps> = ({
   editingEvent,
   initialDate,
   initialGroupId,
+  isSubCalendarLocked,
   onSave,
   onDelete,
   onClose,
@@ -565,14 +567,22 @@ export const EventModal: React.FC<EventModalProps> = ({
               <select
                 value={groupId}
                 onChange={(e) => setGroupId(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs font-semibold text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                disabled={isSubCalendarLocked}
+                className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs font-semibold text-gray-900 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
               >
-                {groups.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.name} ({g.outlookCategory || 'Category'})
-                  </option>
-                ))}
+                {groups
+                  .filter((g) => !isSubCalendarLocked || g.id === groupId)
+                  .map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} ({g.outlookCategory || 'Category'})
+                    </option>
+                  ))}
               </select>
+              {isSubCalendarLocked && (
+                <p className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 mt-1">
+                  🔒 Locked to active sub-calendar
+                </p>
+              )}
             </div>
 
             {/* Date & Time Row */}

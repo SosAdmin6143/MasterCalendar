@@ -17,7 +17,7 @@ import {
   Moon,
   Globe
 } from 'lucide-react';
-import { SharedCalendar, CalendarViewMode } from '../types/calendar';
+import { SharedCalendar, CalendarViewMode, EventGroup } from '../types/calendar';
 
 interface HeaderProps {
   calendars: SharedCalendar[];
@@ -35,6 +35,8 @@ interface HeaderProps {
   onOpenAIModal: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  isSubCalendarMode?: boolean;
+  focusedGroup?: EventGroup | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -53,6 +55,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAIModal,
   isDarkMode,
   onToggleDarkMode,
+  isSubCalendarMode,
+  focusedGroup,
 }) => {
   const [showShareDropdown, setShowShareDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -79,42 +83,51 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Brand & Calendar Selector */}
           <div className="flex items-center justify-between md:justify-start gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-xs">
-                M
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-xs transition-colors"
+                style={{ backgroundColor: (isSubCalendarMode && focusedGroup?.color) ? focusedGroup.color : '#2563eb' }}
+              >
+                {isSubCalendarMode && focusedGroup ? focusedGroup.name.charAt(0).toUpperCase() : 'M'}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">Master Calendar</h1>
+                  <h1 className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
+                    {isSubCalendarMode && focusedGroup ? `${focusedGroup.name} Sub-Calendar` : 'Master Calendar'}
+                  </h1>
                   <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-0.5 rounded-full border border-blue-100 dark:border-blue-900/60">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-                    <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">Synced with Outlook</span>
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300">
+                      {isSubCalendarMode ? 'Live Synced with Master' : 'Synced with Outlook'}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Calendar Selector Dropdown */}
-            <div className="relative group">
-              <select
-                value={activeCalendar.id}
-                onChange={(e) => {
-                  if (e.target.value === 'NEW') {
-                    onCreateCalendar();
-                  } else {
-                    const found = calendars.find((c) => c.id === e.target.value);
-                    if (found) onSelectCalendar(found);
-                  }
-                }}
-                className="bg-gray-50 dark:bg-slate-950 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 text-xs font-medium py-1.5 px-3 pr-8 rounded-lg border border-gray-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-colors"
-              >
-                {calendars.map((cal) => (
-                  <option key={cal.id} value={cal.id}>
-                    📅 {cal.name}
-                  </option>
-                ))}
-                <option value="NEW">+ Create New Shared Calendar...</option>
-              </select>
-            </div>
+            {/* Calendar Selector Dropdown (Only shown on Master Calendar view) */}
+            {!isSubCalendarMode && (
+              <div className="relative group">
+                <select
+                  value={activeCalendar.id}
+                  onChange={(e) => {
+                    if (e.target.value === 'NEW') {
+                      onCreateCalendar();
+                    } else {
+                      const found = calendars.find((c) => c.id === e.target.value);
+                      if (found) onSelectCalendar(found);
+                    }
+                  }}
+                  className="bg-gray-50 dark:bg-slate-950 hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-800 dark:text-slate-200 text-xs font-medium py-1.5 px-3 pr-8 rounded-lg border border-gray-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-colors"
+                >
+                  {calendars.map((cal) => (
+                    <option key={cal.id} value={cal.id}>
+                      📅 {cal.name}
+                    </option>
+                  ))}
+                  <option value="NEW">+ Create New Shared Calendar...</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Navigation Controls & Today */}
@@ -271,87 +284,71 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500">Live Outlook Feeds</span>
                   </div>
 
-                  {/* Option 1: Master Calendar */}
-                  <div className="mb-3">
-                    <button
-                      onClick={() => {
-                        setShowShareDropdown(false);
-                        onOpenShareModal();
-                      }}
-                      className="w-full text-left p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/80 border border-blue-200 dark:border-blue-800/80 flex items-center justify-between gap-3 transition-all cursor-pointer group/item"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs">
-                          M
-                        </div>
-                        <div className="truncate">
-                          <div className="text-xs font-bold text-gray-900 dark:text-white group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400">
-                            Master Calendar
+                  {/* Option 1: Master Calendar (Hidden in sub-calendar isolated mode) */}
+                  {!isSubCalendarMode && (
+                    <div className="mb-3">
+                      <button
+                        onClick={() => {
+                          setShowShareDropdown(false);
+                          onOpenShareModal();
+                        }}
+                        className="w-full text-left p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/80 border border-blue-200 dark:border-blue-800/80 flex items-center justify-between gap-3 transition-all cursor-pointer group/item"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs">
+                            M
                           </div>
-                          <div className="text-[10px] text-gray-500 dark:text-slate-400 truncate">
-                            Includes All {activeCalendar.groups.length} Event Groups
+                          <div className="truncate">
+                            <div className="text-xs font-bold text-gray-900 dark:text-white group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400">
+                              Master Calendar
+                            </div>
+                            <div className="text-[10px] text-gray-500 dark:text-slate-400 truncate">
+                              Includes All {activeCalendar.groups.length} Event Groups
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-600 text-white rounded-full flex-shrink-0">
-                        Full
-                      </span>
-                    </button>
-                  </div>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-600 text-white rounded-full flex-shrink-0">
+                          Full
+                        </span>
+                      </button>
+                    </div>
+                  )}
 
                   <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 px-1 mb-1.5">
-                    Individual Group Feeds ({activeCalendar.groups.length})
+                    {isSubCalendarMode ? 'Sub-Calendar Feed' : `Individual Group Feeds (${activeCalendar.groups.length})`}
                   </div>
 
                   <div className="space-y-1">
-                    {activeCalendar.groups.map((group) => (
-                      <div
-                        key={group.id}
-                        className="w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition-colors group/gitem"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowShareDropdown(false);
-                            if (onFocusSubCalendar) onFocusSubCalendar(group.id);
-                          }}
-                          className="flex items-center gap-2 min-w-0 truncate text-left flex-1 cursor-pointer"
+                    {activeCalendar.groups
+                      .filter((g) => !isSubCalendarMode || (focusedGroup && g.id === focusedGroup.id))
+                      .map((group) => (
+                        <div
+                          key={group.id}
+                          className="w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800/80 flex items-center justify-between gap-2 transition-colors group/gitem"
                         >
-                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: group.color }} />
-                          <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 group-hover/gitem:text-blue-600 dark:group-hover/gitem:text-blue-400 truncate">
-                            {group.name}
-                          </span>
-                        </button>
+                          <div className="flex items-center gap-2 min-w-0 truncate text-left flex-1">
+                            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: group.color }} />
+                            <span className="text-xs font-semibold text-gray-800 dark:text-slate-200 truncate">
+                              {group.name}
+                            </span>
+                          </div>
 
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {onFocusSubCalendar && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
                             <button
                               type="button"
                               onClick={() => {
                                 setShowShareDropdown(false);
-                                onFocusSubCalendar(group.id);
+                                if (onOpenShareGroup) onOpenShareGroup(group.id);
+                                else onOpenShareModal();
                               }}
-                              className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 cursor-pointer"
-                              title="Open Sub-Calendar Web Link View"
+                              className="px-2.5 py-1 rounded text-[10px] font-bold bg-purple-600 text-white hover:bg-purple-700 cursor-pointer shadow-2xs"
+                              title="Outlook Subscription Feed Link"
                             >
-                              Web View
+                              Outlook Feed
                             </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowShareDropdown(false);
-                              if (onOpenShareGroup) onOpenShareGroup(group.id);
-                              else onOpenShareModal();
-                            }}
-                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 cursor-pointer"
-                            title="Outlook Subscription Feed"
-                          >
-                            Feed
-                          </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
 
                   <div className="mt-3 pt-2 border-t border-gray-100 dark:border-slate-800">
