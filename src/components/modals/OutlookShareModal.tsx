@@ -104,6 +104,19 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
     document.body.removeChild(a);
   };
 
+  const downloadGroupICSFile = (groupId: string, groupName: string) => {
+    const rawICS = generateICSFeed(calendar, groupId, origin);
+    const blob = new Blob([rawICS], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cleanGroup = groupName.replace(/[^a-zA-Z0-9_-]/g, '_');
+    a.download = `${calendar.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${cleanGroup}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   // Preview ICS output for inspector tab
   const rawICSPreview = generateICSFeed(
     calendar,
@@ -298,16 +311,18 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
 
               {/* Local LAN IP Alert Box for Outlook Web / Microsoft 365 */}
               {isLocalIp && (
-                <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs space-y-1.5">
-                  <div className="font-bold flex items-center gap-1.5 text-amber-950 dark:text-amber-100">
-                    <span>⚠️ Note for Outlook Web / Microsoft 365 Subscribers</span>
+                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-950 dark:text-red-200 text-xs space-y-2">
+                  <div className="font-bold flex items-center gap-1.5 text-red-950 dark:text-red-100 text-sm">
+                    <span>🛑 Why Outlook Web shows "Couldn't import calendar":</span>
                   </div>
                   <p className="leading-relaxed">
-                    You are connected via a local network IP (<code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded font-bold">{cleanHost.split(':')[0]}</code>). Microsoft's cloud servers cannot reach internal LAN IP addresses over the internet.
+                    You are connected via a private local network IP (<code className="font-mono bg-red-100 dark:bg-red-900/60 px-1 py-0.5 rounded font-bold text-red-900 dark:text-red-100">{cleanHost.split(':')[0]}</code>). Microsoft Outlook Web runs on <strong>Microsoft's cloud servers in Azure</strong>, which cannot reach internal private LAN IPs across the internet.
                   </p>
-                  <div className="pt-1 font-medium space-y-1 text-[11px]">
-                    <div>• <strong>For Outlook Web (Subscribe from Web):</strong> Open this app in your browser using your server's <strong>Public IP Address</strong> so Outlook's cloud servers can connect. Use the <strong>Standard iCal Feed HTTP URL (Link 2)</strong> when pasting.</div>
-                    <div>• <strong>For Local Import:</strong> Click <strong>"Upload from file"</strong> on the left side menu in Outlook and select the downloaded <code className="font-mono bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded">.ics</code> file below.</div>
+                  <div className="pt-1 font-medium space-y-1.5 text-xs bg-white/80 dark:bg-slate-900/80 p-3 rounded-lg border border-red-100 dark:border-red-900/40">
+                    <div className="font-bold text-red-900 dark:text-red-300">How to solve this right now:</div>
+                    <div>1️⃣ <strong>To import into Outlook Web immediately:</strong> On the left menu in Outlook (right under "Subscribe from web"), click <strong>"Upload from file"</strong> and upload the downloaded <code className="font-mono bg-red-100 dark:bg-red-900/60 px-1 py-0.5 rounded">.ics</code> file (click button 3 below).</div>
+                    <div>2️⃣ <strong>For Outlook Desktop App:</strong> Open Outlook Desktop on your PC. Click <strong>File → Account Settings → Internet Calendars → New</strong> and paste the HTTP URL (Link 2 below).</div>
+                    <div>3️⃣ <strong>For Live Cloud Sync in Outlook Web:</strong> Access this website using your server's <strong>Public IP Address</strong> or domain name instead of <code className="font-mono">{cleanHost.split(':')[0]}</code>.</div>
                   </div>
                 </div>
               )}
@@ -371,9 +386,9 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>Quick Individual Group Share Links</span>
+                    <span>Quick Individual Group Actions</span>
                   </h4>
-                  <span className="text-[11px] text-gray-400 dark:text-slate-500 font-medium">Click any group to copy its dedicated link</span>
+                  <span className="text-[11px] text-gray-400 dark:text-slate-500 font-medium">Copy link or download .ics for any group</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -391,26 +406,42 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                             : 'bg-gray-50/80 dark:bg-slate-950/80 border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700'
                         }`}
                       >
-                        <div className="flex items-center gap-2 truncate">
+                        <div className="flex items-center gap-2 truncate min-w-0">
                           <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
                           <span className="text-xs font-semibold text-gray-900 dark:text-slate-200 truncate">{g.name}</span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(gWebcal, `grp-${g.id}`);
-                          }}
-                          className="px-2 py-1 rounded text-[11px] font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-1 transition-colors"
-                        >
-                          {copiedType === `grp-${g.id}` ? (
-                            <Check className="w-3 h-3 text-emerald-500" />
-                          ) : (
-                            <Copy className="w-3 h-3 text-gray-500" />
-                          )}
-                          <span>{copiedType === `grp-${g.id}` ? 'Copied' : 'Copy'}</span>
-                        </button>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(gWebcal, `grp-${g.id}`);
+                            }}
+                            className="px-2 py-1 rounded text-[11px] font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Copy Webcal URL for Outlook"
+                          >
+                            {copiedType === `grp-${g.id}` ? (
+                              <Check className="w-3 h-3 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3 h-3 text-gray-500" />
+                            )}
+                            <span>{copiedType === `grp-${g.id}` ? 'Copied' : 'Copy'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadGroupICSFile(g.id, g.name);
+                            }}
+                            className="px-2 py-1 rounded text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Download .ics file for this group"
+                          >
+                            <Download className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                            <span>.ics</span>
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
