@@ -30,7 +30,7 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
       <div className="w-full flex flex-wrap items-center justify-between gap-3">
         
         {/* Left: Group Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-thin">
+        <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden no-scrollbar py-1">
           <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500 mr-1 select-none">
             <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Event Groups:</span>

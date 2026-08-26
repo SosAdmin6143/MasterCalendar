@@ -227,7 +227,7 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                     </p>
                   </button>
 
-                  {/* Option B: Individual Group Filter Dropdown */}
+                  {/* Option B: Individual Group Feed Selector */}
                   <div
                     className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
                       selectedGroupId !== 'ALL'
@@ -254,20 +254,32 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                       )}
                     </div>
 
-                    <select
-                      value={selectedGroupId}
-                      onChange={(e) => setSelectedGroupId(e.target.value)}
-                      className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-800 dark:text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
-                    >
-                      <option value="ALL" disabled>
-                        -- Select an Individual Group --
-                      </option>
-                      {groups.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          Only Group: {g.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="mt-2 grid grid-cols-1 gap-1.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
+                      {groups.map((g) => {
+                        const isGroupSelected = selectedGroupId === g.id;
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => setSelectedGroupId(g.id)}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                              isGroupSelected
+                                ? 'bg-purple-600 text-white border-purple-600 shadow-2xs font-bold'
+                                : 'bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 border-gray-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: isGroupSelected ? '#ffffff' : g.color }}
+                              />
+                              <span className="truncate">{g.name}</span>
+                            </div>
+                            {isGroupSelected && <Check className="w-3.5 h-3.5 text-white flex-shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                 </div>
