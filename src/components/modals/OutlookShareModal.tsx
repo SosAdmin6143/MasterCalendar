@@ -48,9 +48,42 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
   const webcalUrl = `webcal://${cleanHost}${feedPath}`;
 
   const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedType(type);
-    setTimeout(() => setCopiedType(null), 2000);
+    const fallbackCopy = (content: string) => {
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      // Avoid scrolling to bottom
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setCopiedType(type);
+          setTimeout(() => setCopiedType(null), 2000);
+        }
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(
+        () => {
+          setCopiedType(type);
+          setTimeout(() => setCopiedType(null), 2000);
+        },
+        () => {
+          fallbackCopy(text);
+        }
+      );
+    } else {
+      fallbackCopy(text);
+    }
   };
 
   const downloadICSFile = () => {
