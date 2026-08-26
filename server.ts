@@ -2,9 +2,24 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import dotenv from 'dotenv';
+import pg from 'pg';
 import { GoogleGenAI, Type, Schema } from '@google/genai';
 import { SharedCalendar, CalendarEvent, EventGroup } from './src/types/calendar';
 import { generateICSFeed } from './src/utils/icsGenerator';
+
+dotenv.config();
+
+const { Pool } = pg;
+let dbPool: pg.Pool | null = null;
+
+if (process.env.DATABASE_URL) {
+  console.log('🔌 Connecting to PostgreSQL database...');
+  dbPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
+  });
+}
 
 // Initial default calendar with vibrant color groups
 const defaultGroups: EventGroup[] = [
@@ -176,11 +191,66 @@ calendarsStore.set('cal-default', {
   updatedAt: new Date().toISOString()
 });
 
+async function initDb() {
+  if (!dbPool) return;
+  try {
+    await dbPool.query(`
+      CREATE TABLE IF NOT EXISTS calendars (
+        id VARCHAR(255) PRIMARY KEY,
+        data JSONB NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✅ PostgreSQL "calendars" table initialized.');
+
+    const res = await dbPool.query('SELECT id, data FROM calendars');
+    if (res.rows.length > 0) {
+      for (const row of res.rows) {
+        calendarsStore.set(row.id, row.data as SharedCalendar);
+      }
+      console.log(`📦 Loaded ${res.rows.length} calendar(s) from PostgreSQL.`);
+    } else {
+      const defaultCal = calendarsStore.get('cal-default');
+      if (defaultCal) {
+        await saveCalendarToDb(defaultCal);
+        console.log('🌱 Seeded default Master Calendar into PostgreSQL.');
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error initializing PostgreSQL database:', err);
+  }
+}
+
+async function saveCalendarToDb(cal: SharedCalendar) {
+  if (!dbPool) return;
+  try {
+    await dbPool.query(
+      `INSERT INTO calendars (id, data, updated_at) 
+       VALUES ($1, $2, NOW()) 
+       ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = NOW()`,
+      [cal.id, JSON.stringify(cal)]
+    );
+  } catch (err) {
+    console.error(`❌ Failed to persist calendar ${cal.id} to PostgreSQL:`, err);
+  }
+}
+
+async function deleteCalendarFromDb(id: string) {
+  if (!dbPool) return;
+  try {
+    await dbPool.query('DELETE FROM calendars WHERE id = $1', [id]);
+  } catch (err) {
+    console.error(`❌ Failed to delete calendar ${id} from PostgreSQL:`, err);
+  }
+}
+
 // Initialize Gemini API Client
 const aiApiKey = process.env.GEMINI_API_KEY || '';
 const aiClient = aiApiKey ? new GoogleGenAI({ apiKey: aiApiKey }) : null;
 
 async function startServer() {
+  await initDb();
+
   const app = express();
   const PORT = 3000;
 
@@ -215,7 +285,7 @@ async function startServer() {
   });
 
   // Create new calendar
-  app.post('/api/calendars', (req, res) => {
+  app.post('/api/calendars', async (req, res) => {
     const { name, description, timeZone, ownerName } = req.body;
     const newId = 'cal-' + Date.now().toString(36);
     const newCal: SharedCalendar = {
@@ -230,11 +300,12 @@ async function startServer() {
       updatedAt: new Date().toISOString()
     };
     calendarsStore.set(newId, newCal);
+    await saveCalendarToDb(newCal);
     res.status(201).json(newCal);
   });
 
   // Update calendar details / events / groups
-  app.put('/api/calendars/:id', (req, res) => {
+  app.put('/api/calendars/:id', async (req, res) => {
     const cal = calendarsStore.get(req.params.id);
     if (!cal) {
       return res.status(404).json({ error: 'Calendar not found' });
@@ -249,15 +320,17 @@ async function startServer() {
     cal.updatedAt = new Date().toISOString();
 
     calendarsStore.set(cal.id, cal);
+    await saveCalendarToDb(cal);
     res.json(cal);
   });
 
   // Delete calendar
-  app.delete('/api/calendars/:id', (req, res) => {
+  app.delete('/api/calendars/:id', async (req, res) => {
     if (req.params.id === 'cal-default') {
       return res.status(400).json({ error: 'Cannot delete default calendar' });
     }
     calendarsStore.delete(req.params.id);
+    await deleteCalendarFromDb(req.params.id);
     res.json({ success: true });
   });
 
