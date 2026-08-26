@@ -1,0 +1,6 @@
+{
+  "name": "Master Calendar",
+  "description": "Create, color-code group events, and generate live iCal feeds for Microsoft Outlook and calendar apps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
