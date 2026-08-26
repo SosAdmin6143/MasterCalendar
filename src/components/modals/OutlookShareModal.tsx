@@ -83,15 +83,15 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
         {/* Modal Header */}
         <div className="bg-white dark:bg-slate-900 px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-blue-600 flex items-center justify-center text-white shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs">
               <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                Add to Microsoft Outlook
+                Share & Subscribe in Outlook
               </h2>
               <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">
-                Subscribe via iCal Webcal URL with automatic color category mapping
+                Sync the Master Calendar or individual group feeds live into Microsoft Outlook or Apple/Google Calendar
               </p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>Subscription Feed Links</span>
+              <span>Subscription Feeds</span>
             </button>
 
             <button
@@ -140,25 +140,8 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
               }`}
             >
               <Code2 className="w-3.5 h-3.5" />
-              <span>iCal Code Inspector</span>
+              <span>iCal Payload Inspector</span>
             </button>
-          </div>
-
-          {/* Group Feed Filter Selector */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 pb-2 font-medium">
-            <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <select
-              value={selectedGroupId}
-              onChange={(e) => setSelectedGroupId(e.target.value)}
-              className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-xs font-semibold text-gray-800 dark:text-slate-200 rounded-md px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            >
-              <option value="ALL">Export All Groups (Master Feed)</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  Only Group: {g.name}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 
@@ -169,14 +152,100 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
           {activeTab === 'urls' && (
             <div className="space-y-6">
               
-              {/* Highlight Banner */}
+              {/* Scope Selector: Master Calendar vs Individual Group */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500 block">
+                  Select What You Want To Share
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  
+                  {/* Option A: Master Calendar View */}
+                  <button
+                    onClick={() => setSelectedGroupId('ALL')}
+                    className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      selectedGroupId === 'ALL'
+                        ? 'bg-blue-50/80 dark:bg-blue-950/50 border-blue-500 ring-2 ring-blue-500/30 shadow-xs'
+                        : 'bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                          M
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-gray-900 dark:text-white">
+                            Master Calendar View
+                          </h3>
+                          <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold">
+                            Includes All {groups.length} Event Groups
+                          </span>
+                        </div>
+                      </div>
+                      {selectedGroupId === 'ALL' && (
+                        <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-2 leading-relaxed">
+                      Syncs the entire company schedule across product, ops, leadership, and culture.
+                    </p>
+                  </button>
+
+                  {/* Option B: Individual Group Filter Dropdown */}
+                  <div
+                    className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                      selectedGroupId !== 'ALL'
+                        ? 'bg-purple-50/80 dark:bg-purple-950/50 border-purple-500 ring-2 ring-purple-500/30 shadow-xs'
+                        : 'bg-white dark:bg-slate-950 border-gray-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
+                          <Layers className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-gray-900 dark:text-white">
+                            Individual Group Feed
+                          </h3>
+                          <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold">
+                            Share 1 Specific Category Only
+                          </span>
+                        </div>
+                      </div>
+                      {selectedGroupId !== 'ALL' && (
+                        <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      )}
+                    </div>
+
+                    <select
+                      value={selectedGroupId}
+                      onChange={(e) => setSelectedGroupId(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-800 dark:text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                    >
+                      <option value="ALL" disabled>
+                        -- Select an Individual Group --
+                      </option>
+                      {groups.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          Only Group: {g.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Status Banner reflecting current selection */}
               <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/40 flex items-start gap-3">
                 <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed font-normal">
                   <strong className="text-blue-950 dark:text-blue-100 font-bold block mb-0.5">
-                    Live Outlook Synchronization Active
+                    Currently Selected Feed Scope: {selectedGroupId === 'ALL' ? '📅 Master Calendar (All Groups)' : `📂 Only ${groups.find(g => g.id === selectedGroupId)?.name || 'Selected Group'}`}
                   </strong>
-                  Subscribe in Outlook using either the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">webcal://</code> link or the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">https://</code> feed URL. Outlook will auto-refresh events every 15 minutes and map category group colors dynamically!
+                  Subscribe in Outlook using either the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">webcal://</code> link or the <code className="bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded text-blue-900 dark:text-blue-100 font-mono">https://</code> feed URL. Events update automatically in Outlook every 15 minutes!
                 </div>
               </div>
 
@@ -234,11 +303,64 @@ export const OutlookShareModal: React.FC<OutlookShareModalProps> = ({
                 </div>
               </div>
 
+              {/* Quick Individual Group Feed Links Table */}
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>Quick Individual Group Share Links</span>
+                  </h4>
+                  <span className="text-[11px] text-gray-400 dark:text-slate-500 font-medium">Click any group to copy its dedicated link</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {groups.map((g) => {
+                    const gWebcal = `webcal://${cleanHost}/api/calendar/${calendar.id}/group/${g.id}/feed.ics`;
+                    const isSelected = selectedGroupId === g.id;
+
+                    return (
+                      <div
+                        key={g.id}
+                        onClick={() => setSelectedGroupId(g.id)}
+                        className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-purple-50 dark:bg-purple-950/60 border-purple-400'
+                            : 'bg-gray-50/80 dark:bg-slate-950/80 border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
+                          <span className="text-xs font-semibold text-gray-900 dark:text-slate-200 truncate">{g.name}</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(gWebcal, `grp-${g.id}`);
+                          }}
+                          className="px-2 py-1 rounded text-[11px] font-bold bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center gap-1 transition-colors"
+                        >
+                          {copiedType === `grp-${g.id}` ? (
+                            <Check className="w-3 h-3 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-gray-500" />
+                          )}
+                          <span>{copiedType === `grp-${g.id}` ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Direct .ics Download Option */}
               <div className="pt-2 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-gray-900 dark:text-white">Manual Import (.ics File)</h4>
-                  <p className="text-[11px] text-gray-500 dark:text-slate-400 font-normal">Download static .ics file for offline Outlook import.</p>
+                  <h4 className="text-xs font-bold text-gray-900 dark:text-white">Manual Offline Import (.ics File)</h4>
+                  <p className="text-[11px] text-gray-500 dark:text-slate-400 font-normal">
+                    Download static .ics file for {selectedGroupId === 'ALL' ? 'the full Master Calendar' : 'this group'}.
+                  </p>
                 </div>
                 <button
                   onClick={downloadICSFile}

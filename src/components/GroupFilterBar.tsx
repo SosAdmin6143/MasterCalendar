@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Plus, Settings2, Check, Eye, EyeOff } from 'lucide-react';
+import { Layers, Plus, Settings2, Check, Eye, EyeOff, Share2 } from 'lucide-react';
 import { EventGroup, CalendarEvent } from '../types/calendar';
 
 interface GroupFilterBarProps {
@@ -10,6 +10,7 @@ interface GroupFilterBarProps {
   onToggleAll: (showAll: boolean) => void;
   onOpenManageGroups: () => void;
   onOpenAddGroup: () => void;
+  onOpenShareGroup?: (groupId: string) => void;
 }
 
 export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
@@ -20,6 +21,7 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
   onToggleAll,
   onOpenManageGroups,
   onOpenAddGroup,
+  onOpenShareGroup,
 }) => {
   const allSelected = visibleGroupIds.size === groups.length;
 
@@ -51,13 +53,12 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
             const count = events.filter((e) => e.groupId === group.id).length;
 
             return (
-              <button
+              <div
                 key={group.id}
-                onClick={() => onToggleGroup(group.id)}
-                className={`group relative flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                className={`group/pill relative flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-medium border transition-all ${
                   isVisible
                     ? 'shadow-xs border-transparent font-semibold dark:text-slate-100'
-                    : 'bg-white dark:bg-slate-950 text-gray-400 dark:text-slate-600 border-gray-200 dark:border-slate-800 hover:border-gray-300 dark:hover:border-slate-700 line-through opacity-60'
+                    : 'bg-white dark:bg-slate-950 text-gray-400 dark:text-slate-600 border-gray-200 dark:border-slate-800 opacity-60'
                 }`}
                 style={
                   isVisible
@@ -68,23 +69,40 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
                     : {}
                 }
               >
-                {/* Color Dot */}
-                <span
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: group.color }}
-                />
-
-                <span className="truncate max-w-[150px]">{group.name}</span>
-
-                {/* Event Count Badge */}
-                <span
-                  className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700 ml-0.5"
+                {/* Toggle Group Visibility Button */}
+                <button
+                  type="button"
+                  onClick={() => onToggleGroup(group.id)}
+                  className="flex items-center gap-1.5 cursor-pointer"
                 >
-                  {count}
-                </span>
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: group.color }}
+                  />
+                  <span className={`truncate max-w-[140px] ${!isVisible ? 'line-through' : ''}`}>
+                    {group.name}
+                  </span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-slate-700">
+                    {count}
+                  </span>
+                  {isVisible && <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />}
+                </button>
 
-                {isVisible && <Check className="w-3 h-3 text-blue-600 dark:text-blue-400 ml-0.5" />}
-              </button>
+                {/* Direct Share Button for this Group */}
+                {onOpenShareGroup && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenShareGroup(group.id);
+                    }}
+                    className="p-1 rounded-full hover:bg-white/80 dark:hover:bg-slate-800 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors ml-0.5 cursor-pointer"
+                    title={`Share ${group.name} feed directly`}
+                  >
+                    <Share2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -113,4 +131,5 @@ export const GroupFilterBar: React.FC<GroupFilterBarProps> = ({
     </div>
   );
 };
+
 

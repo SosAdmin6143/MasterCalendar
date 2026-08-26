@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Edit3, Palette, Check, Tag } from 'lucide-react';
+import { X, Plus, Trash2, Edit3, Palette, Check, Tag, Share2 } from 'lucide-react';
 import { EventGroup } from '../../types/calendar';
 import { PRESET_COLORS } from '../ui/ColorPalette';
 
@@ -8,6 +8,7 @@ interface GroupManageModalProps {
   initialCreateMode?: boolean;
   onSaveGroup: (group: Partial<EventGroup>) => void;
   onDeleteGroup: (groupId: string) => void;
+  onOpenShareGroup?: (groupId: string) => void;
   onClose: () => void;
 }
 
@@ -16,6 +17,7 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
   initialCreateMode = false,
   onSaveGroup,
   onDeleteGroup,
+  onOpenShareGroup,
   onClose,
 }) => {
   const [editingGroupId, setEditingGroupId] = useState<string | null>(initialCreateMode ? 'NEW' : null);
@@ -233,6 +235,18 @@ export const GroupManageModal: React.FC<GroupManageModalProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {onOpenShareGroup && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onOpenShareGroup(group.id);
+                        }}
+                        className="p-1.5 rounded-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                        title="Get Share / Outlook Feed Link for this Group"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => startEditGroup(group)}
                       className="p-1.5 rounded-md text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"

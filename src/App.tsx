@@ -338,6 +338,10 @@ export default function App() {
           setShareInitialGroupId('ALL');
           setShowShareModal(true);
         }}
+        onOpenShareGroup={(groupId) => {
+          setShareInitialGroupId(groupId);
+          setShowShareModal(true);
+        }}
         onOpenEventModal={() => {
           setEditingEvent(null);
           setEventInitialDate(new Date());
@@ -354,6 +358,10 @@ export default function App() {
         visibleGroupIds={visibleGroupIds}
         onToggleGroup={handleToggleGroup}
         onToggleAll={handleToggleAllGroups}
+        onOpenShareGroup={(groupId) => {
+          setShareInitialGroupId(groupId);
+          setShowShareModal(true);
+        }}
         onOpenManageGroups={() => {
           setGroupModalCreateMode(false);
           setShowGroupModal(true);
@@ -486,6 +494,10 @@ export default function App() {
           initialCreateMode={groupModalCreateMode}
           onSaveGroup={handleSaveGroup}
           onDeleteGroup={handleDeleteGroup}
+          onOpenShareGroup={(groupId) => {
+            setShareInitialGroupId(groupId);
+            setShowShareModal(true);
+          }}
           onClose={() => setShowGroupModal(false)}
         />
       )}

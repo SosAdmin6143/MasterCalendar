@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   Share2, 
@@ -6,6 +6,7 @@ import {
   Sparkles, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   Layers,
   LayoutGrid,
   CalendarDays,
@@ -13,7 +14,8 @@ import {
   List,
   Columns,
   Sun,
-  Moon
+  Moon,
+  Globe
 } from 'lucide-react';
 import { SharedCalendar, CalendarViewMode } from '../types/calendar';
 
@@ -27,6 +29,7 @@ interface HeaderProps {
   currentDate: Date;
   onNavigateDate: (direction: 'prev' | 'next' | 'today') => void;
   onOpenShareModal: () => void;
+  onOpenShareGroup?: (groupId: string) => void;
   onOpenEventModal: () => void;
   onOpenAIModal: () => void;
   isDarkMode: boolean;
@@ -43,11 +46,24 @@ export const Header: React.FC<HeaderProps> = ({
   currentDate,
   onNavigateDate,
   onOpenShareModal,
+  onOpenShareGroup,
   onOpenEventModal,
   onOpenAIModal,
   isDarkMode,
   onToggleDarkMode,
 }) => {
+  const [showShareDropdown, setShowShareDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowShareDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const formattedDate = currentDate.toLocaleDateString('en-US', {
     month: 'long',
     year: 'numeric',
@@ -220,14 +236,66 @@ export const Header: React.FC<HeaderProps> = ({
               <span>AI Create</span>
             </button>
 
-            {/* Add to Outlook / Share Button */}
-            <button
-              onClick={onOpenShareModal}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 transition-all cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-              <span>Add to Outlook</span>
-            </button>
+            {/* Add to Outlook / Share Button Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowShareDropdown(!showShareDropdown)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 transition-all cursor-pointer shadow-2xs"
+              >
+                <Share2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Share / Add to Outlook</span>
+                <ChevronDown className="w-3 h-3 text-blue-500 opacity-70" />
+              </button>
+
+              {showShareDropdown && (
+                <div className="absolute right-0 mt-1.5 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
+                    Export Feed Scope
+                  </div>
+
+                  {/* Option 1: Master Calendar */}
+                  <button
+                    onClick={() => {
+                      setShowShareDropdown(false);
+                      onOpenShareModal();
+                    }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-colors cursor-pointer"
+                  >
+                    <div className="w-6 h-6 rounded bg-blue-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                      M
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-gray-900 dark:text-white">Master Calendar View</div>
+                      <div className="text-[10px] text-gray-500 dark:text-slate-400">All groups combined in 1 feed</div>
+                    </div>
+                  </button>
+
+                  <div className="my-1.5 border-t border-gray-100 dark:border-slate-800" />
+
+                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
+                    Individual Group Feeds
+                  </div>
+
+                  {activeCalendar.groups.map((group) => (
+                    <button
+                      key={group.id}
+                      onClick={() => {
+                        setShowShareDropdown(false);
+                        if (onOpenShareGroup) {
+                          onOpenShareGroup(group.id);
+                        } else {
+                          onOpenShareModal();
+                        }
+                      }}
+                      className="w-full text-left px-3.5 py-1.5 hover:bg-gray-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors cursor-pointer"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: group.color }} />
+                      <span className="text-xs font-medium text-gray-800 dark:text-slate-200 truncate">{group.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Add Event Button */}
             <button
